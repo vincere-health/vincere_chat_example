@@ -4,7 +4,7 @@ This is an example project for working with Vincere Chat Application connected w
 
 
 ## Usage
-Cope/paste or import file **src/vincereChatProvider.js** into your codebase
+Copy/paste or import file **src/vincereChatProvider.js** into your codebase
 
 VincereChatStateProvider is dependent on following npm modules. Make sure they are installed in your codebase
 - socket.io-client
