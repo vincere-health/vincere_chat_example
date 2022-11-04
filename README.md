@@ -1,70 +1,114 @@
-# Getting Started with Create React App
+## Getting Started with Vincere Chat Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is an example project for working with Vincere Chat Application connected with Health Coach/Clinician facing dashboard. Example in this project is participant facing application, either web or for mobile
 
-## Available Scripts
 
-In the project directory, you can run:
+## Usage
+Cope/paste or import file **src/vincereChatProvider.js** into your codebase
 
-### `npm start`
+VincereChatStateProvider is dependent on following npm modules. Make sure they are installed in your codebase
+- socket.io-client
+- lodash
+- axios
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+To run the example project, do npm install and npm start. It should be up and running with Vincere Development Dashboard environment. Make sure to update the JWT token in the index.js file
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Using in React Component
+Use the chat state provider in your main component or the component in the project where user is already authenticated, since the ChatProvider is dependent on the Vincere JWT Token
+```js
+import React from 'react'
+import App from './App'
+import { ChatStateProvider } from './vincereChatProvider'
 
-### `npm test`
+const root = ReactDOM.createRoot(document.getElementById('root'))
+const rootEndpoint = 'https://apidev.vincerehealth.org'
+const getUserJWTMock = async () => {
+  return '<jwt_token>'
+}
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+root.render(
+  <ChatStateProvider
+    ROOT_ENDPOINT={rootEndpoint} // root endpoint of Vincere Server
+    getJWTToken={getUserJWTMock} // Async function that can fetch JWT as string
+  >
+    <App />
+  </ChatStateProvider>
+)
+```
+| Prop      | Description |
+| ----------- | ----------- |
+| ROOT_ENDPOINT      | Root Endpoint of Vincere Chat Server       |
+| getJWTToken   | async function that can fetch upto date JWT token as string. Output should be plain string. JWT will be refreshed by the provider periodically        |
 
-### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Using the Chat Methods
+```js
+  const {
+    messages, // all the messages. this will be updated in real-time using socket connection
+    loadMoreMessages, // for pagination. on page scroll load more messages
+    loadingChatMessages, // boolean to display loader when messages are being fetched
+    sendMessage, // function to send message
+    chatIsConnected, // indicator if the socket connection is establshed and if you are connected to chat
+  } = useChatState()
+```
+| Prop      | Description | Type |
+| ----------- | ----------- | ----------- |
+| messages      | all the messages. this will be updated in real-time using socket connection     | array
+| loadMoreMessages   | for pagination. on page scroll load more messages   | function
+| loadingChatMessages   | boolean to display loader when messages are being fetched   | boolean
+| sendMessage   | function to send message   | function
+| chatIsConnected   | indicator if the socket connection is establshed and if you are connected to chat   | boolean
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### A note on react native
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+For React Native we recommend using [Gifted Chat](https://github.com/FaridSafi/react-native-gifted-chat). You can use [Snack example here](https://snack.expo.dev/@xcarpentier/giftedchat-playground)
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+We recommend using following configuration for Gifted Chat
+```js
+const {
+  messages,
+  loadMoreMessages,
+  loadingChatMessages,
+  sendMessage,
+  chatIsConnected,
+} = useChatState()
+<GiftedChat
+    messages={messages}
+    onSend={messages => {
+      sendMessage(messages[0])
+    }}
+    user={{ _id: 1 }}
+    renderUsernameOnMessage={true}
+    listViewProps={{
+      scrollEventThrottle: 400,
+      onScroll: async ({ nativeEvent }) => {
+        if (isCloseToTop(nativeEvent)) {
+          loadMoreMessages()
+        }
+      }
+    }}
+    scrollToBottom
+    scrollToBottomComponent={props => {
+      return (
+        <View style={styles.scrollToBottomContainer}>
+          <Icon name={'chevron-down-outline'} size={32} />
+        </View>
+      )
+    }}
+    renderBubble={props => {
+      return (
+        <Bubble
+          {...props}
+          textStyle={{
+            right: styles.bubbleRight,
+          }}
+          wrapperStyle={{ right: styles.bubbleBackGround, }}
+        />
+      )
+    }}
+    renderSend={props => { return (<Send {...props} textStyle={styles.sendColor} />) }}
+    renderMessageImage={renderMessageImage}
+    renderActions={renderActions}
+    keyboardShouldPersistTaps={'never'}
+  />
+```
